@@ -162,12 +162,17 @@ after_initialize do
                         PostDestroyer.new(Discourse.system_user, post).destroy
                     end
                 elsif raw[8, 11] == "code_sample" then
-                    text = "Hello @" + topic.user.username + ", it appears that you have not posted a sample of your code or your code sample is not formatted properly. In order to receive bettter assistance, please refer to this link for guidance on posting your code properly. Thanks. https://forum.codewizardshq.com/t/how-to-post-code-samples/21423/1"
+                    text = "Hello @" + oPost.user.username + ", it appears that you have not posted a sample of your code or your code sample is not formatted properly. In order to receive bettter assistance, please refer to this link for guidance on posting your code properly. Thanks. https://forum.codewizardshq.com/t/how-to-post-code-samples/21423/1"
                     create_post(post.topic_id, text)
                     log_command("received code_sample message", "https://forum.codewizardshq.com/t/#{post.topic_id}", oPost.user.username)
                     PostDestroyer.new(Discourse.system_user, post).destroy
                 elsif raw[8,12] == "project_link" then
-                    text = "Hello @" + topic.user.username + ", it appears that you have not posted a link to your project. In order to receive further or better assistance, please refer to this link as a guidance to posting a link to your project. Thanks. https://forum.codewizardshq.com/t/how-to-post-project-links/21426/1"
+                    text = "Hello @" + oPost.user.username + ", it appears that you have not posted a link to your project. In order to receive further or better assistance, please refer to this link as a guidance to posting a link to your project. Thanks. https://forum.codewizardshq.com/t/how-to-post-project-links/21426/1"
+                    create_post(post.topic_id, text)
+                    log_command("received project_link message", "https://forum.codewizardshq.com/t/#{post.topic_id}", oPost.user.username)
+                    PostDestroyer.new(Discourse.system_user, post).destroy
+                elsif raw[8,13] == "code_sample_and_project_link" then
+                    text = "Hello @" + oPost.user.username + ", It appears that your code sample has not been posted or formatted properly and a link to your project was not provided. Please refer to these topics as a guidance for posting your code sample in the correct format and adding a link to your project. https://forum.codewizardshq.com/t/how-to-post-code-samples/21423/1 and https://forum.codewizardshq.com/t/how-to-post-project-links/21426/1. Thanks."
                     create_post(post.topic_id, text)
                     log_command("received project_link message", "https://forum.codewizardshq.com/t/#{post.topic_id}", oPost.user.username)
                     PostDestroyer.new(Discourse.system_user, post).destroy

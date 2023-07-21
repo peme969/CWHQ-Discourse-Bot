@@ -1,6 +1,6 @@
 # name: CWHQ-Discourse-Bot
 # about: This plugin adds extra functionality to the @system user on a Discourse forum.
-# version: 1.8.0
+# version: 1.9.0
 # authors: Qursch, bronze0202, linuxmasters, sep208
 # url: https://github.com/codewizardshq/CWHQ-Discourse-Bot
 
@@ -101,13 +101,13 @@ def send_pm(title, text, user)
         skip_validations: true
     )
 end
+
 after_initialize do
 
     DiscourseEvent.on(:topic_created) do |topic| 
         newTopic = Post.find_by(topic_id: topic.id, post_number: 1)
         topicRaw = newTopic.raw
         lookFor = topic.user.username + ".codewizardshq.com"
-        #link = get_link(topic.category_id, topic.user.username, courses)
         link = false
         if link then
             if topicRaw.downcase.include?(lookFor + "/edit") then

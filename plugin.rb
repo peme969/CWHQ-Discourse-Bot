@@ -67,8 +67,10 @@ def create_post(topicId, text)
 end
 
 def closeTopic(id, message)
-    topic = Topic.find_by(id: id)               
-    topic.update_status("closed", true, Discourse.system_user, {message: message})
+    topic = Topic.find_by(id: id)
+    topic.update_status("closed", true, Discourse.system_user, { message: message })
+    author_username = topic.user.username
+    send_pm_to_author(author_username, id, message)
 end
 
 def check_title(title)
@@ -102,20 +104,26 @@ def send_pm(title, text, user)
     )
 end
 
-after_initialize do
+def send_pm_to_author(author_username, topic_id, message)
+    title = "Your topic (ID: #{topic_id}) has been closed"
+    text = "Hello @#{author_username},\n\nYour topic (ID: #{topic_id}) has been closed. Reason: #{message}\n\nIf you have any questions or need further assistance, feel free to reach out to us.\n\nBest regards,\nThe CodeWizardsHQ Team"
+    send_pm(title, text, author_username)
+end
 
+after_initialize do
     DiscourseEvent.on(:topic_created) do |topic| 
         newTopic = Post.find_by(topic_id: topic.id, post_number: 1)
         topicRaw = newTopic.raw
         lookFor = topic.user.username + ".codewizardshq.com"
+        #link = get_link(topic.category_id, topic.user.username, courses)
         link = false
         if link then
             if topicRaw.downcase.include?(lookFor + "/edit") then
-                text = "Hello @" + topic.user.username + ", it appears that the link that you provided goes to the editor, and not your project. Please open your project and use the link from that tab. This may look like " + link + "."
+                text = "Hello @" + topic.user.username + ", it appears that the link you provided goes to the editor, and not your project. Please open your project and use the link from that tab. This may look like " + link + "."
                 create_post(topic.id, text)
                 log_command("received an editor link message", "https://forum.codewizardshq.com/t/#{topic.topic_id}", topic.user.username)
             elsif !topicRaw.downcase.include?(lookFor) && !topicRaw.downcase.include?("cwhq-apps.com") then
-                text = "Hello @" + topic.user.username + ", it appears that you did not provide a link to your project. In order to recieve the best help, please edit your topic to contain a link to your project. This may look like " + link + "."
+                text = "Hello @" + topic.user.username + ", it appears that you did not provide a link to your project. In order to receive the best help, please edit your topic to contain a link to your project. This may look like " + link + "."
                 create_post(topic.id, text)
                 log_command("received an missing link message", "https://forum.codewizardshq.com/t/#{topic.topic_id}", topic.user.username)
             end
@@ -162,7 +170,7 @@ after_initialize do
                         PostDestroyer.new(Discourse.system_user, post).destroy
                     end
                 elsif raw[8, 11] == "code_sample" then
-                    text = "Hello @" + oPost.user.username + ", it appears that you have not posted a sample of your code or your code sample is not formatted properly. In order to receive bettter assistance, please refer to this link for guidance on posting your code properly. Thanks. https://forum.codewizardshq.com/t/how-to-post-code-samples/21423/1"
+                    text = "Hello @" + oPost.user.username + ", it appears that you have not posted a sample of your code or your code sample is not formatted properly. In order to receive better assistance, please refer to this link for guidance on posting your code properly. Thanks. https://forum.codewizardshq.com/t/how-to-post-code-samples/21423/1"
                     create_post(post.topic_id, text)
                     log_command("received code_sample message", "https://forum.codewizardshq.com/t/#{post.topic_id}", oPost.user.username)
                     PostDestroyer.new(Discourse.system_user, post).destroy
@@ -208,7 +216,7 @@ after_initialize do
                                 helpUser = User.find_by(username: raw[14, (1+i)])
                                 helper = post.user
                                 title = "Help with the CodeWizardsHQ Forum"
-                                raw = "Hello @" + helpUser.username + ", @" + helper.username + " thinks you might need some help gettting around the forum. Here are some resources that you can read if you would like to know more about this forum:" + helpLinks +  "<br> <br>This message was sent using the [@system help command](https://forum.codewizardshq.com/t/system-add-on-plugin-documentation/8742)." 
+                                raw = "Hello @" + helpUser.username + ", @" + helper.username + " thinks you might need some help getting around the forum. Here are some resources that you can read if you would like to know more about this forum:" + helpLinks +  "<br> <br>This message was sent using the [@system help command](https://forum.codewizardshq.com/t/system-add-on-plugin-documentation/8742)." 
                                 send_pm(title, raw, helpUser.username)
                                 log_command("sent private help to #{helpUser.username}", "https://forum.codewizardshq.com/t/#{post.topic_id}", post.user.username)
                                 PostDestroyer.new(Discourse.system_user, post).destroy
@@ -221,7 +229,7 @@ after_initialize do
 #                 phrases = ["homework help", "on my own", "thanks", "thank you", "figured it out", "it works", "it's working", "myself", "solved", "fixed", "tysm"]
 #                 phrases.each do |i|
 #                     if raw.downcase.include?(i) then
-#                         text = "Hello @#{post.user.username}. Based on your last reply, it seems like the issue you needed help with has been solved. If you would like to close the topic, meaning there will be no more replies allowed, follow the instructions below. If your problem is not solved or you would like to leave the topic open, you may ignore this or submit feedback [here](https://forum.codewizardshq.com/t/bot-commands-and-pr-suggestions-for-system/9254).<br><br>To close your topic, navigate back to your topic (the easiest way to do this is to press the back button to take you the last page you were on). Then make a new reply, and in it type `@system close problem solved`. If you need to, you can replace `problem solved` with a diferent reason for closing. When you post your reply, the topic should close."
+#                         text = "Hello @#{post.user.username}. Based on your last reply, it seems like the issue you needed help with has been solved. If you would like to close the topic, meaning there will be no more replies allowed, follow the instructions below. If your problem is not solved or you would like to leave the topic open, you may ignore this or submit feedback [here](https://forum.codewizardshq.com/t/bot-commands-and-pr-suggestions-for-system/9254).<br><br>To close your topic, navigate back to your topic (the easiest way to do this is to press the back button to take you the last page you were on). Then make a new reply, and in it type `@system close problem solved`. If you need to, you can replace `problem solved` with a different reason for closing. When you post your reply, the topic should close."
 #                         title = "Do you want to close your get help topic?"
 #                         send_pm(title, text, post.user.username)
 #                         log_command("was sent topic closing instructions", "https://forum.codewizardshq.com/t/#{post.topic_id}", post.user.username)

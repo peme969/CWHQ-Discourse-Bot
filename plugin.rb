@@ -1,7 +1,7 @@
 # name: CWHQ-Discourse-Bot
 # about: This plugin adds extra functionality to the @system user on a Discourse forum.
 # version: 1.9.0
-# authors: Qursch, bronze0202, linuxmasters, sep208, Astr0clad, usrbinsam, daniel-schroeder-dev, sharpkeen, PyCoder10
+# authors: Qursch, bronze0202, linuxmasters, sep208, Astr0clad, usrbinsam, daniel-schroeder-dev, sharpkeen, shriyash-shukla
 # url: https://github.com/codewizardshq/CWHQ-Discourse-Bot
 
 require 'date'
@@ -43,13 +43,13 @@ courses = {
 }
 
 def get_link(id, username, hash)
-    if id == 11 || id == 57 then
+    if id == 11 || id == 57
         return "`https://scratch.mit.edu/projects/00000000`" 
     else
-        if !hash[id].nil? && hash[id] == "m112_intro_prog_py_00" then
-            return "`https://" + username + ".codewizardshq.com/" + hash[id] + "/project` or `https://" + username + ".codewizardshq.com/" + hash[id] + "/project-folder`"
-        elsif !hash[id].nil? then
-            return "`https://" + username + ".codewizardshq.com/" + hash[id] + "/project`"
+        if !hash[id].nil? && hash[id] == "m112_intro_prog_py_00"
+            return "`https://#{username}.codewizardshq.com/#{hash[id]}/project` or `https://#{username}.codewizardshq.com/#{hash[id]}/project-folder`"
+        elsif !hash[id].nil?
+            return "`https://#{username}.codewizardshq.com/#{hash[id]}/project`"
         end
     end
     return false
@@ -60,7 +60,8 @@ def create_post(topicId, text)
         Discourse.system_user,
         skip_validations: true,
         topic_id: topicId,
-        raw: text)
+        raw: text
+    )
     unless post.nil?
         post.save(validate: false)
     end
@@ -74,7 +75,7 @@ def closeTopic(id, message)
 end
 
 def check_title(title)
-    if title.downcase.include?("codewizardshq.com") || title.downcase.include?("scratch.mit.edu") then
+    if title.downcase.include?("codewizardshq.com") || title.downcase.include?("scratch.mit.edu")
         return true
     else
         return false
@@ -82,7 +83,7 @@ def check_title(title)
 end
 
 def check_all_link_types(text)
-    if (text.include?("codewizardshq.com") && !text.include?("/edit")) || (text.include?("cwhq-apps") || text.include?("scratch.mit.edu")) then
+    if (text.include?("codewizardshq.com") && !text.include?("/edit")) || (text.include?("cwhq-apps") || text.include?("scratch.mit.edu"))
         return true
     end
 end
@@ -119,21 +120,20 @@ after_initialize do
         link = false
         if link then
             if topicRaw.downcase.include?(lookFor + "/edit") then
-                text = "Hello @" + topic.user.username + ", it appears that the link you provided goes to the editor, and not your project. Please open your project and use the link from that tab. This may look like " + link + "."
+                text = "Hello @#{topic.user.username}, it appears that the link you provided goes to the editor, and not your project. Please open your project and use the link from that tab. This may look like " + link + "."
                 create_post(topic.id, text)
                 log_command("received an editor link message", "https://forum.codewizardshq.com/t/#{topic.topic_id}", topic.user.username)
             elsif !topicRaw.downcase.include?(lookFor) && !topicRaw.downcase.include?("cwhq-apps.com") then
-                text = "Hello @" + topic.user.username + ", it appears that you did not provide a link to your project. In order to receive the best help, please edit your topic to contain a link to your project. This may look like " + link + "."
+                text = "Hello @#{topic.user.username}, it appears that you did not provide a link to your project. In order to receive the best help, please edit your topic to contain a link to your project. This may look like " + link + "."
                 create_post(topic.id, text)
-                log_command("received an missing link message", "https://forum.codewizardshq.com/t/#{topic.topic_id}", topic.user.username)
+                log_command("received a missing link message", "https://forum.codewizardshq.com/t/#{topic.topic_id}", topic.user.username)
             end
-
         end
 
         topic_title = topic.title
         
         if check_title(topic_title) then
-            text = "Hello @" + topic.user.username + ", it appears you provided a link in your topic's title. Please change the title of this topic to something that clearly explains what the topic is about. This will help other forum users know what you want to show or get help with. You can edit your topic title by pressing the pencil icon next to the current one. Be sure to put the link in the main body of your post."
+            text = "Hello @#{topic.user.username}, it appears you provided a link in your topic's title. Please change the title of this topic to something that clearly explains what the topic is about. This will help other forum users know what you want to show or get help with. You can edit your topic title by pressing the pencil icon next to the current one. Be sure to put the link in the main body of your post."
             if topicRaw.downcase.include?(lookFor) || topicRaw.downcase.include?("scratch.mit.edu") then
                 create_post(topic.id, text)
                 log_command("received a link in topic title message", "https://forum.codewizardshq.com/t/#{topic.topic_id}", topic.user.username)
@@ -161,31 +161,31 @@ after_initialize do
             if raw[0, 7].downcase == "@system" then
                 if raw[8, 5] == "close" then
                     if (!post.user.primary_group_id.nil? && group.name == "Helpers") || (oPost.user.username == post.user.username && !courses[post.topic.category_id].nil?) then
-                        text = "Closed by @" + post.user.username + ": " + raw[14..raw.length]
+                        text = "Closed by @#{post.user.username}: #{raw[14..raw.length]}"
                         if oPost.user.username == post.user.username then
-                            text = "Closed by topic creator: " + raw[14..raw.length]
+                            text = "Closed by topic creator: #{raw[14..raw.length]}"
                         end
                         closeTopic(post.topic_id, text)
                         log_command("closed a topic", "https://forum.codewizardshq.com/t/#{post.topic_id}", post.user.username)
                         PostDestroyer.new(Discourse.system_user, post).destroy
                     end
                 elsif raw[8, 11] == "code_sample" then
-                    text = "Hello @" + oPost.user.username + ", it appears that you have not posted a sample of your code or your code sample is not formatted properly. In order to receive better assistance, please refer to this link for guidance on posting your code properly. Thanks. https://forum.codewizardshq.com/t/how-to-post-code-samples/21423/1"
+                    text = "Hello @#{oPost.user.username}, it appears that you have not posted a sample of your code or your code sample is not formatted properly. In order to receive better assistance, please refer to this link for guidance on posting your code properly. Thanks. [Code Sample Guide](https://forum.codewizardshq.com/t/how-to-post-code-samples/21423/1)"
                     create_post(post.topic_id, text)
                     log_command("received code_sample message", "https://forum.codewizardshq.com/t/#{post.topic_id}", oPost.user.username)
                     PostDestroyer.new(Discourse.system_user, post).destroy
                 elsif raw[8,12] == "project_link" then
-                    text = "Hello @" + oPost.user.username + ", it appears that you have not posted a link to your project. In order to receive further or better assistance, please refer to this link as a guidance to posting a link to your project. Thanks. https://forum.codewizardshq.com/t/how-to-post-project-links/21426/1"
+                    text = "Hello @#{oPost.user.username}, it appears that you have not posted a link to your project. In order to receive further or better assistance, please refer to this link as guidance to posting a link to your project. Thanks. [Project Link Guide](https://forum.codewizardshq.com/t/how-to-post-project-links/21426/1)"
                     create_post(post.topic_id, text)
                     log_command("received project_link message", "https://forum.codewizardshq.com/t/#{post.topic_id}", oPost.user.username)
                     PostDestroyer.new(Discourse.system_user, post).destroy
                 elsif raw[8,13] == "code_sample_and_project_link" then
-                    text = "Hello @" + oPost.user.username + ", It appears that your code sample has not been posted or formatted properly and a link to your project was not provided. Please refer to these topics as a guidance for posting your code sample in the correct format and adding a link to your project. https://forum.codewizardshq.com/t/how-to-post-code-samples/21423/1 and https://forum.codewizardshq.com/t/how-to-post-project-links/21426/1. Thanks."
+                    text = "Hello @#{oPost.user.username}, it appears that your code sample has not been posted or formatted properly and a link to your project was not provided. Please refer to these topics as guidance for posting your code sample in the correct format and adding a link to your project. [Code Sample Guide](https://forum.codewizardshq.com/t/how-to-post-code-samples/21423/1) and [Project Link Guide](https://forum.codewizardshq.com/t/how-to-post-project-links/21426/1). Thanks."
                     create_post(post.topic_id, text)
                     log_command("received project_link message", "https://forum.codewizardshq.com/t/#{post.topic_id}", oPost.user.username)
                     PostDestroyer.new(Discourse.system_user, post).destroy
                 elsif raw[8,8] == "add_both" then
-                    text = "Hello @" + oPost.user.username + ", please refer to these topics for posting the link to your project and pasting your code. https://forum.codewizardshq.com/t/how-to-post-code-samples/21423/1 and https://forum.codewizardshq.com/t/how-to-post-project-links/21426/1. Thanks."
+                    text = "Hello @#{oPost.user.username}, please refer to these topics for posting the link to your project and pasting your code. [Code Sample Guide](https://forum.codewizardshq.com/t/how-to-post-code-samples/21423/1) and [Project Link Guide](https://forum.codewizardshq.com/t/how-to-post-project-links/21426/1). Thanks."
                     create_post(post.topic_id, text)
                     log_command("received project_link and code_sample message", "https://forum.codewizardshq.com/t/#{post.topic_id}", oPost.user.username)
                     PostDestroyer.new(Discourse.system_user, post).destroy
@@ -206,7 +206,7 @@ after_initialize do
                         PostDestroyer.new(Discourse.system_user, post).destroy
                       end
                 elsif raw[8, 4] == "help" && raw[13] != "@" then
-                  text = "Hello @" + post.user.username + ". Here are some resources to help you on the forum:" + helpLinks
+                  text = "Hello @#{post.user.username}. Here are some resources to help you on the forum:#{helpLinks}"
                   create_post(post.topic_id, text)
                   log_command("sent public help", "https://forum.codewizardshq.com/t/#{post.topic_id}", post.user.username)
                 elsif raw[8,4] == "help" && raw[13] == "@" then
@@ -216,7 +216,7 @@ after_initialize do
                                 helpUser = User.find_by(username: raw[14, (1+i)])
                                 helper = post.user
                                 title = "Help with the CodeWizardsHQ Forum"
-                                raw = "Hello @" + helpUser.username + ", @" + helper.username + " thinks you might need some help getting around the forum. Here are some resources that you can read if you would like to know more about this forum:" + helpLinks +  "<br> <br>This message was sent using the [@system help command](https://forum.codewizardshq.com/t/system-add-on-plugin-documentation/8742)." 
+                                raw = "Hello @#{helpUser.username}, @#{helper.username} thinks you might need some help getting around the forum. Here are some resources that you can read if you would like to know more about this forum:#{helpLinks}<br> <br>This message was sent using the [@system help command](https://forum.codewizardshq.com/t/system-add-on-plugin-documentation/8742)." 
                                 send_pm(title, raw, helpUser.username)
                                 log_command("sent private help to #{helpUser.username}", "https://forum.codewizardshq.com/t/#{post.topic_id}", post.user.username)
                                 PostDestroyer.new(Discourse.system_user, post).destroy
